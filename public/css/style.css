@@ -1,0 +1,134 @@
+/* Pastikan body memiliki margin dan padding yang sesuai */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Source Sans Pro", sans-serif;
+    background-color: #f4f6f9;
+}
+
+/* Navbar styling */
+.navbar {
+    background-color: #161179 !important; /* Warna biru yang lebih sesuai */
+    padding: 10px 20px;
+}
+
+.navbar .navbar-brand {
+    display: flex;
+    align-items: center;
+    color: white !important;
+    font-weight: bold;
+}
+
+.navbar .navbar-brand img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.navbar .nav-link {
+    color: white !important;
+    font-weight: bold;
+}
+
+.navbar .nav-link:hover {
+    text-decoration: underline;
+}
+
+/* Dropdown styling */
+.dropdown-menu {
+    background-color: #261fb3;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.dropdown-menu .dropdown-item {
+    color: #261fb3 !important;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: #007bff;
+    color: black !important;
+}
+
+/* Container styling */
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+/* Content styling */
+.content-wrapper {
+    background: #fbe4d6;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer styling */
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #161179;
+    color: white;
+    margin-top: 20px;
+}
+
+/* Halaman Login */
+
+/* Styling untuk body agar lebih elegan */
+body {
+    background-color: #f4f6f9;
+    font-family: "Nunito", sans-serif;
+}
+
+/* Styling untuk container login dan register */
+.auth-container {
+    max-width: 450px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Header card */
+.auth-header {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Styling untuk input fields */
+.form-control {
+    border-radius: 5px;
+}
+
+/* Styling untuk tombol */
+.btn-auth {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    transition: background 0.3s ease;
+}
+
+.btn-auth:hover {
+    background-color: #0056b3;
+}
+
+/* Styling untuk link */
+.auth-link {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
