@@ -8,8 +8,7 @@ class HomeController extends Controller
 {
     /**
      * Create a new controller instance.
-     *
-     * @return void
+     * Semua method dalam controller ini hanya bisa diakses oleh user yang sudah login.
      */
     public function __construct()
     {
@@ -17,7 +16,7 @@ class HomeController extends Controller
     }
 
     /**
-     * Show the application dashboard.
+     * Tampilkan halaman dashboard utama.
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
@@ -26,7 +25,11 @@ class HomeController extends Controller
         return view('home');
     }
 
-
+    /**
+     * Tampilkan halaman marker.
+     *
+     * @return \Illuminate\Contracts\Support\Renderable
+     */
     public function marker()
     {
         return view('layouts.marker');

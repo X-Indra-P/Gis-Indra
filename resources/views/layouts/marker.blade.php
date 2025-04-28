@@ -6,6 +6,13 @@
 <style>
     #map { height: 500px; }
     #marker-list { margin-top: 20px; }
+    .debug-info { 
+        background-color: #f8f9fa; 
+        padding: 10px; 
+        border-radius: 5px; 
+        margin-bottom: 15px; 
+        display: none; 
+    }
 </style>
 @endsection
 
@@ -14,13 +21,17 @@
     <div class="row justify-content-center">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-header">Peta dengan Marker</div>
-                <div class="card-body">
+                <div class="card-header">
+                    Peta dengan Marker
+                </div>
                     <button onclick="panToLocation(-8.671656, 115.228044)" class="btn btn-primary mb-3">
                         Titik Awal
                     </button>
                     <div id="map"></div>
-                    <div id="marker-list"></div>
+                    <div id="marker-list" class="mt-4">
+                        <h4>Daftar Marker <span id="marker-count">(0)</span>:</h4>
+                        <div id="marker-items"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,43 +44,122 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
-    const map = L.map('map').setView([-8.671656, 115.228044], 12);
 
-    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    });
+    // Inisialisasi peta
+    let map;
+    let markers = []; // Array untuk menyimpan marker
 
-    streetLayer.addTo(map);
+    // Fungsi inisialisasi
+    function initMap() {
+        
+        // Inisialisasi peta jika belum ada
+        if (!map) {
+            map = L.map('map').setView([-8.671656, 115.228044], 12);
 
-    let markers = [];
+            // Tambahkan layer OpenStreetMap
+            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            });
+            streetLayer.addTo(map);
+            
+            // Tambahkan event listener untuk menambah marker saat peta diklik
+            map.on('click', function(e) {
+                const { lat, lng } = e.latlng;
+                const markerName = prompt("Masukkan nama marker:", "Marker Baru");
 
+                if (markerName) {
+                    saveMarker(lat, lng, markerName);
+                }
+            });
+        }
+    }
+    
+    // Pindah ke lokasi tertentu
     function panToLocation(lat, lng) {
-        map.panTo([lat, lng], {
-            animate: true,
-            duration: 1
-        });
+        if (map) {
+            map.panTo([lat, lng], {
+                animate: true,
+                duration: 1
+            });
+        }
+    }
+
+    // Fungsi untuk memuat ulang marker secara manual (untuk debugging)
+    function refreshMarkers() {
+        loadMarkers();
     }
 
     // Fungsi untuk mengambil marker dari database
     function loadMarkers() {
+        // Kosongkan array markers terlebih dahulu
+        markers = [];
+        
+        // Hapus semua marker dari peta
+        if (map) {
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+        
+        // Ambil data marker dari server
         fetch('/get-markers')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                data.forEach(marker => {
-                    let newMarker = L.marker([marker.latitude, marker.longitude]).addTo(map)
-                        .bindPopup(`<b>${marker.name}</b><br>(${marker.latitude.toFixed(5)}, ${marker.longitude.toFixed(5)})`);
-                    markers.push({ lat: marker.latitude, lng: marker.longitude, name: marker.name, marker: newMarker });
-                });
+                
+                // Debug output untuk melihat struktur data
+                console.log("Data marker dari server:", data);
+                
+                // Update counter
+                document.getElementById('marker-count').textContent = `(${data.length})`;
+                
+                if (data.length === 0) {
+                } else {
+                    data.forEach((marker, index) => {
+                        try {
+                            
+                            // Konversi latitude dan longitude ke number untuk memastikan
+                            const lat = parseFloat(marker.latitude);
+                            const lng = parseFloat(marker.longitude);
+                            
+                            if (isNaN(lat) || isNaN(lng)) {
+                                throw new Error(`Koordinat tidak valid: (${marker.latitude}, ${marker.longitude})`);
+                            }
+                            
+                            let newMarker = L.marker([lat, lng]).addTo(map)
+                                .bindPopup(`<b>${marker.name}</b><br>(${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+                            
+                            markers.push({ 
+                                id: marker.id,
+                                lat: lat, 
+                                lng: lng, 
+                                name: marker.name, 
+                                marker: newMarker 
+                            });
+                        } catch (err) {
+                        }
+                    });
+                }
 
+                // Update daftar marker di halaman
                 updateMarkerList();
             })
-            .catch(error => console.error('Error loading markers:', error));
+            .catch(error => {
+                console.error('Error saat memuat marker:', error);
+                
+                document.getElementById('marker-items').innerHTML = 
+                    `<div class="alert alert-danger">Gagal memuat marker: ${error.message}</div>`;
+            });
     }
 
-    loadMarkers(); // Panggil saat halaman dimuat
-
-    // Fungsi untuk menyimpan marker ke database dan menambahkannya ke daftar
+    // Fungsi untuk menyimpan marker ke database
     function saveMarker(lat, lng, name) {
         fetch('/save-marker', {
             method: "POST",
@@ -83,35 +173,55 @@
                 longitude: lng
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            let newMarker = L.marker([lat, lng]).addTo(map)
-                .bindPopup(`<b>${name}</b><br>(${lat.toFixed(5)}, ${lng.toFixed(5)})`);
-            markers.push({ lat, lng, name, marker: newMarker });
-
-            updateMarkerList();
-            console.log("Marker saved:", data);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
         })
-        .catch(error => console.error("Error saving marker:", error));
+        .then(data => {
+            
+            // Setelah berhasil menyimpan, muat ulang semua marker
+            loadMarkers();
+        })
+        .catch(error => {
+            console.error("Error saat menyimpan marker:", error);
+            
+            alert(`Gagal menyimpan marker: ${error.message}`);
+        });
     }
-
-    // Fungsi untuk menambahkan marker dengan klik
-    map.on('click', function(e) {
-        const { lat, lng } = e.latlng;
-        const markerName = prompt("Masukkan nama marker:", "Marker Baru");
-
-        if (markerName) {
-            saveMarker(lat, lng, markerName);
-        }
-    });
 
     // Fungsi untuk memperbarui daftar marker di HTML
     function updateMarkerList() {
-        let listElement = document.getElementById("marker-list");
-        listElement.innerHTML = "<h4>Daftar Marker:</h4>";
-        markers.forEach(m => {
-            listElement.innerHTML += `<p>${m.name} - (${m.lat.toFixed(5)}, ${m.lng.toFixed(5)})</p>`;
+        let listElement = document.getElementById("marker-items");
+        listElement.innerHTML = "";
+        
+        if (markers.length === 0) {
+            listElement.innerHTML = "<p>Belum ada marker tersimpan.</p>";
+            return;
+        }
+        
+        markers.forEach((m, index) => {
+            listElement.innerHTML += `
+                <div class="card mb-2">
+                    <div class="card-body p-2">
+                        <strong>${m.name}</strong> - (${m.lat.toFixed(5)}, ${m.lng.toFixed(5)})
+                    </div>
+                </div>
+            `;
         });
     }
+    
+    // Inisialisasi semua komponen saat DOM selesai dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Inisialisasi peta
+        initMap();
+        
+        // Muat marker dari database
+        setTimeout(() => {
+            loadMarkers();
+        }, 500); // Tunggu sebentar untuk memastikan peta telah selesai diinisialisasi
+    });
 </script>
 @endpush

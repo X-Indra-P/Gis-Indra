@@ -7,7 +7,31 @@ use App\Models\Marker;
 
 class MarkerController extends Controller
 {
-    // Menyimpan marker ke database
+    /**
+     * Menampilkan semua marker dari database
+     */
+    public function getMarkers()
+    {
+        $markers = Marker::all(); // Mengambil semua marker
+        
+        // Pastikan semua nilai latitude dan longitude diubah ke float
+        $markers = $markers->map(function($marker) {
+            return [
+                'id' => $marker->id,
+                'name' => $marker->name,
+                'latitude' => (float) $marker->latitude,
+                'longitude' => (float) $marker->longitude,
+                'created_at' => $marker->created_at,
+                'updated_at' => $marker->updated_at
+            ];
+        });
+        
+        return response()->json($markers);
+    }
+
+    /**
+     * Menyimpan marker baru ke database
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -18,16 +42,10 @@ class MarkerController extends Controller
 
         $marker = Marker::create([
             'name' => $request->name,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'latitude' => (float) $request->latitude,
+            'longitude' => (float) $request->longitude,
         ]);
 
         return response()->json(['message' => 'Marker berhasil disimpan!', 'marker' => $marker], 201);
-    }
-
-    // Mengambil semua marker dari database
-    public function index()
-    {
-        return response()->json(Marker::orderBy('id', 'desc')->get());
     }
 }
